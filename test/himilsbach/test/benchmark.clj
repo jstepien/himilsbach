@@ -1,4 +1,4 @@
-(ns himilsbach.benchmark
+(ns himilsbach.test.benchmark
   (require [himilsbach.core :as him]))
 
 (defn- actors-in-a-ring

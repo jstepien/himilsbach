@@ -8,9 +8,11 @@ A tiny actor library for Clojure.
 Usage
 -----
 
-See `src/himilsbach/benchmark.clj` or run it with
+See [`test/himilsbach/test/benchmark.clj`][bm] or run it with
 
-    lein run -m himilsbach.benchmark
+    lein run -m himilsbach.test.benchmark
+
+[bm]: https://github.com/jstepien/himilsbach/blob/master/test/himilsbach/test/benchmark.clj
 
 Related work
 ------------
