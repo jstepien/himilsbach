@@ -231,6 +231,6 @@
 
 (defn -main
   [& _]
-  (run-tests 'actor.test)
+  (run-tests 'himilsbach.test.core)
   (prn (Thread/activeCount) 'active 'threads)
   (System/exit 0))
