@@ -12,7 +12,12 @@ See [`test/himilsbach/test/benchmark.clj`][bm] or run it with
 
     lein run -m himilsbach.test.benchmark
 
+Himilsbach is available on [Clojars][clojars].
+
+    [org.clojure.jan/himilsbach "0.0.0"]
+
 [bm]: https://github.com/jstepien/himilsbach/blob/master/test/himilsbach/test/benchmark.clj
+[clojars]: https://clojars.org/org.clojure.jan/himilsbach
 
 Related work
 ------------
