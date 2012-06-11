@@ -3,6 +3,8 @@ himilsbach
 
 A tiny actor library for Clojure.
 
+[![Build Status](https://secure.travis-ci.org/jstepien/himilsbach.png?branch=master)](http://travis-ci.org/jstepien/himilsbach)
+
 Usage
 -----
 
