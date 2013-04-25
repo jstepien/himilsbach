@@ -10,7 +10,7 @@
         sem (gensym)
         msg (gensym)
         stopped (gensym)]
-    `(let [~inbox (ref ())
+    `(let [~inbox (ref [])
            ~sem (Semaphore. 0)
            ~stopped (atom false)
            fun# (fn [~msg]
@@ -40,16 +40,16 @@
   [actor & msg]
   (let [[inbox ^Semaphore sem & _] actor]
     (dosync
-      (ref-set inbox (seq (concat @inbox [(vec msg)]))))
+      (ref-set inbox (conj @inbox (vec msg))))
     (.release sem)))
 
 (defn- inbox-pop
   [[inbox ^Semaphore sem _]]
   (.acquire sem)
   (dosync
-    (let [obj (first @inbox)]
-      (ref-set inbox (rest @inbox))
-      obj)))
+    (let [[head & tail] @inbox]
+      (ref-set inbox tail)
+      head)))
 
 (defn start
   [actor]
