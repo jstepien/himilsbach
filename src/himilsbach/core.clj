@@ -72,7 +72,7 @@
 
 (defn stop
   [[_ _ stopped & _]]
-    (swap! stopped (fn [_] true)))
+    (reset! stopped true))
 
 (defmacro any-matching?
   [actor pattern]
