@@ -17,10 +17,18 @@
   []
   (Semaphore. 0))
 
+(defmacro ^:private do-and-die
+  [& body]
+  `(do
+     ~@body
+     ~'(die)))
+
 (deftest send-and-start
   (let [sem (semaphore)
         success (atom false)
-        a (him/new [_] (do (swap! success not) (rel sem)))]
+        a (him/new [_] (do-and-die
+                         (swap! success not)
+                         (rel sem)))]
     (him/send! a '())
     (him/start a)
     (acq sem)
@@ -29,7 +37,9 @@
 (deftest start-and-send
   (let [sem (semaphore)
         success (atom false)
-        a (him/new [_] (do (swap! success not) (rel sem)))]
+        a (him/new [_] (do-and-die
+                         (swap! success not)
+                         (rel sem)))]
     (him/start a)
     (him/send! a '())
     (acq sem)
@@ -38,9 +48,14 @@
 (deftest no-match
   (let [sem (semaphore)
         success (atom false)
-        a (him/new [x y] (do (swap! success not) (rel sem))
-                     [x]   (do (swap! success not)   (rel sem))
-                     _     (do (rel sem)))]
+        a (him/new [x y] (do-and-die
+                           (swap! success not)
+                           (rel sem))
+                   [x]   (do-and-die
+                           (swap! success not)
+                           (rel sem))
+                    _    (do-and-die
+                           (rel sem)))]
     (him/start a)
     (him/send! a :qwer :asdf :zxcv)
     (acq sem)
@@ -49,8 +64,12 @@
 (deftest successful-match
   (let [sem (semaphore)
         success (atom false)
-        a (him/new [x]   (do (swap! success true?) (rel sem))
-                     [x y] (do (swap! success not)   (rel sem)))]
+        a (him/new [x]   (do-and-die
+                           (swap! success true?)
+                           (rel sem))
+                   [x y] (do-and-die
+                           (swap! success not)
+                           (rel sem)))]
     (him/start a)
     (him/send! a :foo :bar)
     (acq sem)
@@ -62,8 +81,9 @@
         a (him/new [_] (case (int @state)
                            4 (do (swap! state inc)
                                  (him/send! self '()))
-                           5 (do (swap! state inc)
-                                 (rel sem))
+                           5 (do-and-die
+                               (swap! state inc)
+                               (rel sem))
                              (do (throw "This didn't work")
                                  (rel sem))))]
     (him/start a)
@@ -90,7 +110,10 @@
   (let [sem (semaphore)
         state (atom 4)
         received-notification (atom false)
-        a (him/new _ (swap! received-notification not))
+        a (him/new [msg] (do
+                           (when-not (= :all-went-fine-please-die msg)
+                             (swap! received-notification not))
+                           (die)))
         b (him/new a
             [_] (do
                   (swap! state inc)
@@ -104,7 +127,8 @@
     (acq sem)
     (Thread/sleep 5)
     (is (= 6 @state))
-    (is (not @received-notification))))
+    (is (not @received-notification))
+    (him/send! a :all-went-fine-please-die)))
 
 (deftest two-actor-ping-pong
   (let [sem (semaphore)
@@ -112,13 +136,13 @@
         a (him/new [:b from] (do
                                  (swap! state #(+ 2 %))
                                  (him/send! from :c self))
-                     [:d from] (do
+                     [:d from] (do-and-die
                                  (swap! state #(+ 8 %))
                                  (rel sem)))
         b (him/new [:a from] (do
                                  (swap! state #(+ 1 %))
                                  (him/send! from :b self))
-                     [:c from] (do
+                     [:c from] (do-and-die
                                  (swap! state #(+ 4 %))
                                  (him/send! from :d self)))]
     (doall (map him/start [a b]))
@@ -137,11 +161,14 @@
                                            actors))
                        [:ping from] (him/send! from :pong)
                        [:pong] (when (= (* n n) (swap! state inc))
-                                 (rel sem))))
+                                 (rel sem))
+                       [:die] (die)))
         actors (take n (repeatedly actor))]
     (doall (map him/start actors))
     (doall (map #(him/send! % :start actors) actors))
     (acq sem)
+    (doseq [a actors]
+      (him/send! a :die))
     (is (= (* n n) @state))))
 
 (deftest unique-id
@@ -153,15 +180,19 @@
             [name other] (let [id (him/id other)]
                            (if (and (@ids id) (= (@ids id) name))
                              (rel sem)
-                             (swap! ids #(conj % [id name])))))
+                             (swap! ids #(conj % [id name]))))
+            [:die] (die))
         b (him/new
-            [:send other] (him/send! other :b self))]
+            [:send other] (him/send! other :b self)
+            [:die] (die))]
     (doall (map him/start [a b]))
     (him/send! b :send a)
     (him/send! a :send a)
     (him/send! b :send a)
     (him/send! a :send a)
     (acq sem 2)
+    (doseq [actor [a b]]
+      (him/send! actor :die))
     (is (= 2 (count (distinct (keys @ids)))))
     (is (= 2 (count (distinct (vals @ids)))))))
 
@@ -170,7 +201,7 @@
         throwable (Error.)
         state (atom nil)
         a (him/new
-            [:error who ex] (do
+            [:error who ex] (do-and-die
                               (swap! state (fn [_] [(him/id who) ex]))
                               (rel sem)))
         b (him/new a
@@ -186,7 +217,7 @@
         throwable (Exception.)
         state (atom nil)
         a (him/new
-            [:error who ex] (do
+            [:error who ex] (do-and-die
                               (swap! state (fn [_] [(him/id who) ex]))
                               (rel sem)))
         b (him/new a
@@ -204,7 +235,8 @@
                 [:error _ ^Exception ex]
                   (when (= (.getMessage ex) "Stopped!")
                     (swap! success not)
-                    (rel sem2))
+                    (rel sem2)
+                    (die))
                 _ (rel sem2))
         a (him/new watch [_] (do
                                  (Thread/sleep 1)
