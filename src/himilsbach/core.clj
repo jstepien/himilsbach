@@ -14,21 +14,19 @@
            ~sem (Semaphore. 0)
            ~stopped (atom false)
            fun# (fn [~msg]
-                  ~(if (odd? (count body))
-                     `(let [~'self [~inbox ~sem]
-                            ~'die (fn [] kill-order)]
-                        (try
-                          (if @~stopped
-                            (throw (Exception. "Stopped!"))
-                            (match
-                              ~msg
-                              ~@(rest body)))
-                          (catch Throwable ex#
-                            (send! ~(first body) :error ~'self ex#)
-                            (~'die))))
-                     `(let [~'self [~inbox ~sem]
-                            ~'die (fn [] kill-order)]
-                        (if @~stopped
+                  (let [~'self [~inbox ~sem]
+                        ~'die (fn [] kill-order)]
+                    ~(if (odd? (count body))
+                       `(try
+                         (if @~stopped
+                           (throw (Exception. "Stopped!"))
+                           (match
+                             ~msg
+                             ~@(rest body)))
+                         (catch Throwable ex#
+                           (send! ~(first body) :error ~'self ex#)
+                           (~'die)))
+                       `(if @~stopped
                           (throw Exception "Stopped!")
                           (match
                             ~msg
