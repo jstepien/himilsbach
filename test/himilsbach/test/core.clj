@@ -27,7 +27,7 @@
   (let [sem (semaphore)
         success (atom false)
         a (him/new [_] (do-and-die
-                         (swap! success not)
+                         (reset! success true)
                          (rel sem)))]
     (him/send! a '())
     (him/start a)
@@ -38,7 +38,7 @@
   (let [sem (semaphore)
         success (atom false)
         a (him/new [_] (do-and-die
-                         (swap! success not)
+                         (reset! success true)
                          (rel sem)))]
     (him/start a)
     (him/send! a '())
@@ -47,14 +47,15 @@
 
 (deftest no-match
   (let [sem (semaphore)
-        success (atom false)
+        success (atom true)
         a (him/new [x y] (do-and-die
-                           (swap! success not)
+                           (reset! success true)
                            (rel sem))
                    [x]   (do-and-die
-                           (swap! success not)
+                           (reset! success true)
                            (rel sem))
                     _    (do-and-die
+                           (reset! success false)
                            (rel sem)))]
     (him/start a)
     (him/send! a :qwer :asdf :zxcv)
@@ -65,10 +66,10 @@
   (let [sem (semaphore)
         success (atom false)
         a (him/new [x]   (do-and-die
-                           (swap! success true?)
+                           (reset! success false)
                            (rel sem))
                    [x y] (do-and-die
-                           (swap! success not)
+                           (reset! success true)
                            (rel sem)))]
     (him/start a)
     (him/send! a :foo :bar)
@@ -112,7 +113,7 @@
         received-notification (atom false)
         a (him/new [msg] (do
                            (when-not (= :all-went-fine-please-die msg)
-                             (swap! received-notification not))
+                             (reset! received-notification true))
                            (die)))
         b (him/new a
             [_] (do
@@ -234,7 +235,7 @@
         watch (him/new
                 [:error _ ^Exception ex]
                   (when (= (.getMessage ex) "Stopped!")
-                    (swap! success not)
+                    (reset! success true)
                     (rel sem2)
                     (die))
                 _ (rel sem2))
