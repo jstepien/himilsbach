@@ -8,30 +8,24 @@
   [& body]
   (let [inbox (gensym)
         sem (gensym)
-        msg (gensym)
-        stopped (gensym)]
+        msg (gensym)]
     `(let [~inbox (ref [])
            ~sem (Semaphore. 0)
-           ~stopped (atom false)
            fun# (fn [~msg]
                   (let [~'self [~inbox ~sem]
                         ~'die (fn [] kill-order)]
                     ~(if (odd? (count body))
                        `(try
-                         (if @~stopped
-                           (throw (Exception. "Stopped!"))
-                           (match
-                             ~msg
-                             ~@(rest body)))
+                          (match
+                            ~msg
+                            ~@(rest body))
                          (catch Throwable ex#
                            (send! ~(first body) :error ~'self ex#)
                            (~'die)))
-                       `(if @~stopped
-                          (throw Exception "Stopped!")
-                          (match
-                            ~msg
-                            ~@body)))))]
-       [~inbox ~sem ~stopped fun#])))
+                       `(match
+                          ~msg
+                          ~@body))))]
+       [~inbox ~sem fun#])))
 
 (defn send!
   [actor & msg]
@@ -51,7 +45,7 @@
 (defn start
   [actor]
   (future
-    (let [[_ _ _ f] actor]
+    (let [[_ _ f] actor]
       (loop []
         (when-not (= kill-order (f (inbox-pop actor)))
           (recur)))))
@@ -66,10 +60,6 @@
         (let [sym (gensym 'actor_)]
           (ref-set ids (conj @ids [inbox sym]))
           sym)))))
-
-(defn stop
-  [[_ _ stopped & _]]
-    (reset! stopped true))
 
 (defmacro any-matching?
   [actor pattern]

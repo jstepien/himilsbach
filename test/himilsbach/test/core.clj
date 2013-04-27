@@ -232,29 +232,6 @@
     (acq sem)
     (is (= [(him/id b) throwable] @state))))
 
-(deftest stopping
-  (let [sem1 (semaphore)
-        sem2 (semaphore)
-        success (atom false)
-        watch (him/new
-                [:error _ ^Exception ex]
-                  (when (= (.getMessage ex) "Stopped!")
-                    (reset! success true)
-                    (rel sem2)
-                    (die))
-                _ (rel sem2))
-        a (him/new watch [_] (do
-                                 (Thread/sleep 1)
-                                 (rel sem1)
-                                 (him/send! self ())))]
-    (him/start a)
-    (him/start watch)
-    (him/send! a '())
-    (acq sem1)
-    (him/stop a)
-    (acq sem2)
-    (is @success)))
-
 (deftest any-matching?
   (let [a (him/new _ ())]
     (him/send! a :asdf 5)
