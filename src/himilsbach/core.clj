@@ -24,9 +24,8 @@
                               ~msg
                               ~@(rest body)))
                           (catch Throwable ex#
-                            (do
-                              (send! ~(first body) :error ~'self ex#)
-                              (~'die)))))
+                            (send! ~(first body) :error ~'self ex#)
+                            (~'die))))
                      `(let [~'self [~inbox ~sem]
                             ~'die (fn [] kill-order)]
                         (if @~stopped
