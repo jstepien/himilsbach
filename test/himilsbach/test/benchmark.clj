@@ -19,15 +19,18 @@
 (defn run
   [n]
   (let [sem (java.util.concurrent.Semaphore. 0)
-        actors (actors-in-a-ring sem n)]
-    (doall (map him/start actors))
-    (doall (map #(him/send! % :start actors) actors))
+        actors (actors-in-a-ring sem n)
+        domap (comp doall map)]
+    (domap him/start actors)
+    (domap #(him/send! % :start actors) actors)
     (.acquire sem)
-    (doall (map #(him/send! % :die) actors))))
+    (domap #(him/send! % :die) actors)))
 
 (defn -main
   ([] (-main "100"))
   ([times & _]
-   (dotimes [_ (Integer/parseInt times)]
-     (time (run (Integer/parseInt times))))
+   (let [n (Integer/parseInt times)]
+     (time
+       (dotimes [_ n]
+         (time (run n)))))
    (System/exit 0)))
