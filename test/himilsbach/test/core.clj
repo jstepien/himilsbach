@@ -146,7 +146,8 @@
                      [:c from] (do-and-die
                                  (swap! state #(+ 4 %))
                                  (him/send! from :d self)))]
-    (doall (map him/start [a b]))
+    (doseq [actor [a b]]
+      (him/start actor))
     (him/send! b :a a)
     (acq sem)
     (is (= 15 @state))))
@@ -156,17 +157,17 @@
         sem (semaphore)
         state (atom 0)
         actor (fn [] (him/new
-                       [:start actors] (doall
-                                         (map
-                                           #(him/send! % :ping self)
-                                           actors))
+                       [:start actors] (doseq [actor actors]
+                                         (him/send! actor :ping self))
                        [:ping from] (him/send! from :pong)
                        [:pong] (when (= (* n n) (swap! state inc))
                                  (rel sem))
                        [:die] (die)))
         actors (take n (repeatedly actor))]
-    (doall (map him/start actors))
-    (doall (map #(him/send! % :start actors) actors))
+    (doseq [actor actors]
+      (him/start actor))
+    (doseq [actor actors]
+      (him/send! actor :start actors))
     (acq sem)
     (doseq [a actors]
       (him/send! a :die))
@@ -186,7 +187,8 @@
         b (him/new
             [:send other] (him/send! other :b self)
             [:die] (die))]
-    (doall (map him/start [a b]))
+    (doseq [actor [a b]]
+      (him/start actor))
     (him/send! b :send a)
     (him/send! a :send a)
     (him/send! b :send a)
@@ -194,8 +196,8 @@
     (acq sem 2)
     (doseq [actor [a b]]
       (him/send! actor :die))
-    (is (= 2 (count (distinct (keys @ids)))))
-    (is (= 2 (count (distinct (vals @ids)))))))
+    (doseq [fn [keys vals]]
+      (is (= 2 (count (distinct (fn @ids))))))))
 
 (deftest error-notifications-error
   (let [sem (semaphore)
@@ -207,7 +209,8 @@
                               (rel sem)))
         b (him/new a
             [:throw] (throw throwable))]
-    (doall (map him/start [a b]))
+    (doseq [actor [a b]]
+      (him/start actor))
     (him/send! b :throw)
     (acq sem)
     (is (= [(him/id b) throwable] @state))))
@@ -223,7 +226,8 @@
                               (rel sem)))
         b (him/new a
             [:throw] (throw throwable))]
-    (doall (map him/start [a b]))
+    (doseq [actor [a b]]
+      (him/start actor))
     (him/send! b :throw)
     (acq sem)
     (is (= [(him/id b) throwable] @state))))
