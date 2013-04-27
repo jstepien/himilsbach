@@ -2,7 +2,8 @@
   (use [clojure.core.match :only [match]])
   (import java.util.concurrent.Semaphore))
 
-(def kill-order (Object.))
+(def ^{:doc "Internal use only. Please don't touch."}
+  -kill-order (Object.))
 
 (defmacro new
   [& body]
@@ -13,7 +14,7 @@
            ~sem (Semaphore. 0)
            fun# (fn [~msg]
                   (let [~'self [~inbox ~sem]
-                        ~'die (fn [] kill-order)]
+                        ~'die (fn [] -kill-order)]
                     ~(if (odd? (count body))
                        `(try
                           (match
@@ -47,7 +48,7 @@
   (future
     (let [[_ _ f] actor]
       (loop []
-        (when-not (= kill-order (f (inbox-pop actor)))
+        (when-not (= -kill-order (f (inbox-pop actor)))
           (recur)))))
   nil)
 
