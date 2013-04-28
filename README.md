@@ -8,7 +8,26 @@ A tiny actor library for Clojure.
 Usage
 -----
 
-See [`test/himilsbach/test/benchmark.clj`][bm] or run it with
+```clojure
+(require '[himilsbach.core :as him])
+(let [actor (him/new
+              [:ping msg timestamp] (let [now (System/nanoTime)
+                                          dt (/ (- now timestamp) 1000)
+                                          id (him/id self)]
+                                      (println id "pinged" dt "μs ago:" msg))
+              [:die]                (let [id (him/id self)]
+                                      (println id "gracefully dies")
+                                      (die))
+              something             (let [id (him/id self)]
+                                      (println id "received" something)))]
+  (him/start actor)
+  (him/send! actor :ping {:foo :bar} (System/nanoTime))
+  (him/send! actor "some" :unexpected 'values)
+  (him/send! actor :die))
+```
+
+An example with a full graph of agents sending pings to each other can be found
+in [`test/himilsbach/test/benchmark.clj`][bm]. Run it with
 
     lein run -m himilsbach.test.benchmark
 
