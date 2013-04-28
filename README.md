@@ -11,17 +11,15 @@ Usage
 ```clojure
 (require '[himilsbach.core :as him])
 (let [actor (him/new
-              [:ping msg timestamp] (let [now (System/nanoTime)
-                                          dt (/ (- now timestamp) 1000)
-                                          id (him/id self)]
-                                      (println id "pinged" dt "μs ago:" msg))
-              [:die]                (let [id (him/id self)]
-                                      (println id "gracefully dies")
-                                      (die))
-              something             (let [id (him/id self)]
-                                      (println id "received" something)))]
+              [:ping timestamp] (let [now (System/nanoTime)
+                                      dt (/ (- now timestamp) 1000)]
+                                  (println (him/id self) "pinged" dt "μs ago"))
+              [:die]            (do
+                                  (println (him/id self) "gracefully dies")
+                                  (die))
+              something         (println (him/id self) "received" something))]
   (him/start actor)
-  (him/send! actor :ping {:foo :bar} (System/nanoTime))
+  (him/send! actor :ping (System/nanoTime))
   (him/send! actor "some" :unexpected 'values)
   (him/send! actor :die))
 ```
