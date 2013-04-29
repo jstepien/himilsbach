@@ -34,7 +34,7 @@ Himilsbach is available on [Clojars][clojars].
     [himilsbach "0.0.1"]
 
 [bm]: https://github.com/jstepien/himilsbach/blob/master/test/himilsbach/test/benchmark.clj
-[clojars]: https://clojars.org/org.clojure.jan/himilsbach
+[clojars]: https://clojars.org/himilsbach
 
 Related work
 ------------
