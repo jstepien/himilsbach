@@ -1,4 +1,4 @@
-(defproject org.clojure.jan/himilsbach "0.0.1-SNAPSHOT"
+(defproject himilsbach "0.0.1-SNAPSHOT"
   :description "A tiny actor library for Clojure"
   :url "https://github.com/jstepien/himilsbach"
   :license {:name "MIT License"
