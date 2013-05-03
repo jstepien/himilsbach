@@ -24,7 +24,7 @@ Usage
   (him/send! actor :die))
 ```
 
-An example with a full graph of agents sending pings to each other can be found
+An example with a full graph of actors sending pings to each other can be found
 in [`test/himilsbach/test/benchmark.clj`][bm]. Run it with
 
     lein run -m himilsbach.test.benchmark
