@@ -5,10 +5,8 @@
   [sem n]
   (let [state (atom 0)
         actor (fn [] (him/new
-                       [:start actors] (doall
-                                         (map
-                                           #(him/send! % :ping self)
-                                           actors))
+                       [:start actors] (doseq [actor actors]
+                                         (him/send! actor :ping self))
                        [:ping from] (him/send! from :pong)
                        [:pong] (when (= (* n n) (swap! state inc))
                                  (.release sem))
@@ -19,12 +17,13 @@
 (defn run
   [n]
   (let [sem (java.util.concurrent.Semaphore. 0)
-        actors (actors-in-a-ring sem n)
-        domap (comp doall map)]
-    (domap him/start actors)
-    (domap #(him/send! % :start actors) actors)
+        all (actors-in-a-ring sem n)]
+    (doseq [actor all]
+      (him/start actor)
+      (him/send! actor :start all))
     (.acquire sem)
-    (domap #(him/send! % :die) actors)))
+    (doseq [actor all]
+      (him/send! actor :die))))
 
 (defn -main
   ([] (-main "100"))
