@@ -25,13 +25,11 @@
 
   See `clojure.core.match/match' for details regarding pattern matching."
   [& body]
-  (let [inbox (gensym)
-        sem (gensym)
-        msg (gensym)]
-    `(let [~inbox (ConcurrentLinkedQueue.)
-           ~sem (Semaphore. 0)
+  (let [msg (gensym)]
+    `(let [inbox# (ConcurrentLinkedQueue.)
+           sem# (Semaphore. 0)
            fun# (fn [~msg]
-                  (let [~'self [~inbox ~sem]
+                  (let [~'self [inbox# sem#]
                         ~'die (fn [] -kill-order)]
                     ~(if (odd? (count body))
                        `(try
@@ -44,14 +42,13 @@
                        `(match
                           ~msg
                           ~@body))))]
-       [~inbox ~sem fun#])))
+       [inbox# sem# fun#])))
 
 (defn send!
   "Sends a message to a given actor."
-  [actor & msg]
-  (let [[^ConcurrentLinkedQueue inbox ^Semaphore sem _] actor]
-    (.add inbox (vec msg))
-    (.release sem)))
+  [[^ConcurrentLinkedQueue inbox ^Semaphore sem _] & msg]
+  (.add inbox (vec msg))
+  (.release sem))
 
 (defn- inbox-pop
   [[^ConcurrentLinkedQueue inbox ^Semaphore sem _]]
@@ -74,8 +71,8 @@
     "Returns the unique identifier of a given actor."
     [[inbox & _]]
     (dosync
-      (if (@ids inbox)
-        (@ids inbox)
+      (if-let [id (@ids inbox)]
+        id
         (let [sym (gensym 'actor_)]
           (ref-set ids (conj @ids [inbox sym]))
           sym)))))
