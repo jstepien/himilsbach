@@ -1,6 +1,7 @@
 (ns himilsbach.core
   (use [clojure.core.match :only [match]])
-  (import java.util.concurrent.Semaphore))
+  (import java.util.concurrent.Semaphore
+          java.util.concurrent.ConcurrentLinkedQueue))
 
 (def ^{:doc "Internal use only. Please don't touch."}
   -kill-order (Object.))
@@ -27,7 +28,7 @@
   (let [inbox (gensym)
         sem (gensym)
         msg (gensym)]
-    `(let [~inbox (ref [])
+    `(let [~inbox (ConcurrentLinkedQueue.)
            ~sem (Semaphore. 0)
            fun# (fn [~msg]
                   (let [~'self [~inbox ~sem]
@@ -48,18 +49,14 @@
 (defn send!
   "Sends a message to a given actor."
   [actor & msg]
-  (let [[inbox ^Semaphore sem & _] actor]
-    (dosync
-      (ref-set inbox (conj @inbox (vec msg))))
+  (let [[^ConcurrentLinkedQueue inbox ^Semaphore sem _] actor]
+    (.add inbox (vec msg))
     (.release sem)))
 
 (defn- inbox-pop
-  [[inbox ^Semaphore sem _]]
+  [[^ConcurrentLinkedQueue inbox ^Semaphore sem _]]
   (.acquire sem)
-  (dosync
-    (let [[head & tail] @inbox]
-      (ref-set inbox tail)
-      head)))
+  (.poll inbox))
 
 (defn start
   "Starts the actor created with `new' in a new future.
@@ -88,4 +85,4 @@
   pattern."
   [actor pattern]
   `(let [[inbox# & ~'_] ~actor]
-     (some #(match % ~pattern true) @inbox#)))
+     (some #(match % ~pattern true) inbox#)))
