@@ -81,5 +81,4 @@
   "Returns true if any message in the inbox of the given actor matches the given
   pattern."
   [actor pattern]
-  `(let [[inbox# & ~'_] ~actor]
-     (some #(match % ~pattern true) inbox#)))
+  `(some #(match % ~pattern true) (first ~actor)))
