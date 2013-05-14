@@ -31,7 +31,9 @@ in [`test/himilsbach/test/benchmark.clj`][bm]. Run it with
 
 Himilsbach is available on [Clojars][clojars].
 
-    [himilsbach "0.0.1"]
+```clojure
+[himilsbach "0.0.1"]
+```
 
 [bm]: https://github.com/jstepien/himilsbach/blob/master/test/himilsbach/test/benchmark.clj
 [clojars]: https://clojars.org/himilsbach
