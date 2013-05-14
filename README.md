@@ -32,7 +32,7 @@ in [`test/himilsbach/test/benchmark.clj`][bm]. Run it with
 Himilsbach is available on [Clojars][clojars].
 
 ```clojure
-[himilsbach "0.0.1"]
+[himilsbach "0.1.0"]
 ```
 
 [Documentation generated using Marginalia][docs] is available.
